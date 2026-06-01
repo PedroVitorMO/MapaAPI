@@ -97,7 +97,6 @@ async function loadFirebaseData() {
             let geoPoint = data.coordenadas; 
             
             let nomeLocal = data.nome || data.Nome || doc.id;
-            let tipoId = data.tipo_id || data.tipo || "geral";
             tipoId = tipoId.toLowerCase().trim();
 
             if (geoPoint && typeof geoPoint.latitude === 'number' && typeof geoPoint.longitude === 'number') {
