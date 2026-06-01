@@ -104,7 +104,6 @@ async function loadFirebaseData() {
                 locationsData.push({
                     id: doc.id,
                     nome: nomeLocal,
-                    tipo_id: tipoId,
                     lat: geoPoint.latitude,
                     lng: geoPoint.longitude
                 });
