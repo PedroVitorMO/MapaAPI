@@ -130,9 +130,6 @@ async function loadFirebaseData() {
 function renderPlacesList(places) {
     const listEl = document.getElementById('places-list');
     listEl.innerHTML = '';
-    
-    places.forEach(place => {
-        const config = tipoConfig[place.tipo_id] || tipoConfig["geral"];
 
         const li = document.createElement('li');
         li.className = 'place-item';
