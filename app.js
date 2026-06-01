@@ -142,7 +142,7 @@ function renderPlacesList(places) {
                 <i class="${config.icone}" style="color: ${config.cor}; margin-right: 8px; width: 18px; text-align: center;"></i>
                 ${place.nome}
             </div>
-            <div class="place-type" style="margin-left: 26px;">tipo_id: <b>${place.tipo_id}</b></div>
+            <div class="place-type" style="margin-left: 26px;"></b></div>
         `;
         
         li.addEventListener('click', () => {
