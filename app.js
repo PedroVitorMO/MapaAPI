@@ -164,7 +164,7 @@ function plotMarkers(places) {
             anchor: 'bottom'
         })
         .setLngLat([place.lng, place.lat])
-        .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<b>${place.nome}</b><br>Tipo: ${place.tipo_id}`))
+        .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<b>${place.nome}</b><br>))
         .addTo(map);
     });
 }
