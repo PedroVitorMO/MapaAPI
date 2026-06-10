@@ -48,11 +48,7 @@ function initMap() {
     });
 
     map.addControl(new mapboxgl.NavigationControl());
-
-    // Evento seguro: só busca os dados quando o estilo do mapa terminar de carregar totalmente
-    map.on('style.load', () => {
-        getUserLocation();
-    });
+    getUserLocation();
 }
 
 // Captura a localização atual (GPS) do usuário
@@ -79,7 +75,7 @@ function getUserLocation() {
     }
 }
 
-// Busca os pontos cadastrados no Cloud Firestore
+// Busca os pontos cadastrados no Cloud Firestore usando o formato Geopoint puro
 async function loadFirebaseData() {
     const loadingEl = document.getElementById('loading');
     try {
@@ -94,15 +90,18 @@ async function loadFirebaseData() {
         
         querySnapshot.forEach((doc) => {
             const data = doc.data();
-            let geoPoint = data.coordenadas; 
+            let geoPoint = data.coordenadas; // Seu campo do tipo geopoint
             
             let nomeLocal = data.nome || data.Nome || doc.id;
+            let tipoId = data.tipo_id || data.tipo || "geral";
             tipoId = tipoId.toLowerCase().trim();
 
+            // Leitura direta e sem falhas dos campos numéricos nativos do Firebase
             if (geoPoint && typeof geoPoint.latitude === 'number' && typeof geoPoint.longitude === 'number') {
                 locationsData.push({
                     id: doc.id,
                     nome: nomeLocal,
+                    tipo_id: tipoId,
                     lat: geoPoint.latitude,
                     lng: geoPoint.longitude
                 });
@@ -110,17 +109,16 @@ async function loadFirebaseData() {
         });
 
         if (locationsData.length === 0) {
-            loadingEl.innerHTML = "Aviso: Verifique o campo 'coordenadas' (tipo geopoint) no banco.";
+            loadingEl.innerHTML = "Aviso: Altere o campo 'coordenadas' para o tipo 'geopoint' em todos os documentos do seu banco.";
             return;
         }
 
-        // Correção aplicada aqui (removida a linha duplicada com erro de sintaxe)
         loadingEl.style.display = 'none';
         renderPlacesList(locationsData);
         plotMarkers(locationsData);
 
     } catch (error) {
-        console.error("Erro detalhado ao conectar com Firestore:", error);
+        console.error("Erro ao conectar com Firestore:", error);
         loadingEl.innerHTML = "Erro ao carregar dados do Firebase.";
     }
 }
@@ -129,6 +127,9 @@ async function loadFirebaseData() {
 function renderPlacesList(places) {
     const listEl = document.getElementById('places-list');
     listEl.innerHTML = '';
+    
+    places.forEach(place => {
+        const config = tipoConfig[place.tipo_id] || tipoConfig["geral"];
 
         const li = document.createElement('li');
         li.className = 'place-item';
@@ -137,7 +138,7 @@ function renderPlacesList(places) {
                 <i class="${config.icone}" style="color: ${config.cor}; margin-right: 8px; width: 18px; text-align: center;"></i>
                 ${place.nome}
             </div>
-            <div class="place-type" style="margin-left: 26px;"></b></div>
+            <div class="place-type" style="margin-left: 26px;">tipo_id: <b>${place.tipo_id}</b></div>
         `;
         
         li.addEventListener('click', () => {
@@ -149,17 +150,17 @@ function renderPlacesList(places) {
     });
 }
 
-// Desenha os marcadores no mapa
+// Desenha os marcadores no mapa alinhados perfeitamente
 function plotMarkers(places) {
     places.forEach(place => {
         const config = tipoConfig[place.tipo_id] || tipoConfig["geral"];
 
         new mapboxgl.Marker({ 
             color: config.cor,
-            anchor: 'bottom'
+            anchor: 'bottom' // Faz a ponta de baixo do pino tocar a coordenada real da rua
         })
         .setLngLat([place.lng, place.lat])
-        .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<b>${place.nome}</b><br>))
+        .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<b>${place.nome}</b><br>Tipo: ${place.tipo_id}`))
         .addTo(map);
     });
 }
@@ -177,7 +178,7 @@ function onPlaceSelect(place) {
     }
 }
 
-// Faz a chamada à API do Mapbox Directions e desenha o trajeto
+// Faz a chamada à API do Mapbox Directions e desenha o trajeto estável
 async function getRoute(start, end) {
     const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${start[0]},${start[1]};${end[0]},${end[1]}?steps=true&geometries=geojson&access_token=${mapboxgl.accessToken}&language=pt`;
     
@@ -191,7 +192,7 @@ async function getRoute(start, end) {
         const routeGeoJson = data.geometry;
 
         if (map.getSource('route')) {
-            map.getSource('getSource').setData({ type: 'Feature', properties: {}, geometry: routeGeoJson });
+            map.getSource('route').setData({ type: 'Feature', properties: {}, geometry: routeGeoJson });
         } else {
             map.addSource('route', { 
                 type: 'geojson', 
@@ -220,5 +221,4 @@ async function getRoute(start, end) {
     }
 }
 
-// Inicialização direta do mapa
-initMap();
+window.onload = initMap;
